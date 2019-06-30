@@ -1,26 +1,34 @@
 #!/usr/bin/env python3
+""" Client for the ever exciting game Socket Adventure """
 import socket
 import sys
 
-try:
-    port = int(sys.argv[1])
-except IndexError:
-    print("Please include a port number, eg: python serve.py 50000")
-    exit(-1)
 
-client_socket = socket.socket()
-client_socket.connect(("127.0.0.1", port))
-
-while True:
+def main():
+    """ Ah, I see you're a man of cultre as well. """
     try:
-        response = client_socket.recv(4096).decode()
-    except ConnectionAbortedError:
-        print("Connection closed by host.")
-        break
+        port = int(sys.argv[1])
+    except IndexError:
+        print("Please include a port number, eg: python serve.py 50000")
+        exit(-1)
 
-    print(response)
-    if "OK! Goodbye!" in response:
-        sys.exit(0)
+    client_socket = socket.socket()
+    client_socket.connect(("127.0.0.1", port))
 
-    my_message = input("> ").encode('utf-8') + b'\n'
-    client_socket.sendall(my_message)
+    while True:
+        try:
+            response = client_socket.recv(4096).decode()
+        except ConnectionAbortedError:
+            print("Connection closed by host.")
+            break
+
+        print(response)
+        if "OK! Goodbye!" in response:
+            sys.exit(0)
+
+        my_message = input("> ").encode("utf-8") + b"\n"
+        client_socket.sendall(my_message)
+
+
+if __name__ == "__main__":
+    main()

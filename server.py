@@ -1,7 +1,9 @@
+# pylint: disable=R0903, R0902, W0123, R0201, W0613
+""" Server for the most anticipated game in all time """
 import socket
 
 
-class Room():
+class Room:
     """ base empty room class """
 
     def __init__(self, north=None, south=None, west=None, east=None):
@@ -11,12 +13,12 @@ class Room():
         self.west = east
 
 
-class Server(object):
+class Server:
     """
     An adventure game socket server
-    
+
     An instance's methods share the following variables:
-    
+
     * self.socket: a "bound" server socket, as produced by socket.bind()
     * self.client_connection: a "connection" socket as produced by socket.accept()
     * self.input_buffer: a string that has been read from the connected client and
@@ -27,14 +29,14 @@ class Server(object):
     * self.done: A boolean, False until the client is ready to disconnect
     * self.room: one of 0, 1, 2, 3. This signifies which "room" the client is in,
       according to the following map:
-      
+
                                      3                      N
                                      |                      ^
                                  1 - 0 - 2                  |
-                                 
+
     When a client connects, they are greeted with a welcome message. And then they can
     move through the connected rooms. For example, on connection:
-    
+
     OK! Welcome to Realms of Venture! This room has brown wall paper!  (S)
     move north                                                         (C)
     OK! This room has white wallpaper.                                 (S)
@@ -46,7 +48,7 @@ class Server(object):
     OK! This room has a green floor!                                   (S)
     quit                                                               (C)
     OK! Goodbye!                                                       (S)
-    
+
     Note that we've annotated server and client messages with *(S)* and *(C)*, but
     these won't actually appear in server/client communication. Also, you'll be
     free to develop any room descriptions you like: the only requirement is that
@@ -56,7 +58,6 @@ class Server(object):
     game_name = "Realms of Venture"
 
     def __init__(self, port=50000):
-
         self.input_buffer = ""
         self.output_buffer = ""
         self.done = False
@@ -68,13 +69,13 @@ class Server(object):
         self.rooms = None
 
     def connect(self):
+        """ Initialize connection """
         self.socket = socket.socket(
-            socket.AF_INET,
-            socket.SOCK_STREAM,
-            socket.IPPROTO_TCP)
+            socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP
+        )
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        address = ('127.0.0.1', self.port)
+        address = ("127.0.0.1", self.port)
         self.socket.bind(address)
         self.socket.listen(1)
 
@@ -90,40 +91,42 @@ class Server(object):
 
         :param room_number: int
         :return: str
-        """        
+        """
         rooms = {
-            1: 'You are in the Red Room',
-            2: 'You are in the Black Room',
-            3: 'You are in the Blue Room',
-            0: 'You are in the White Room',
+            1: "You are in the Red Room",
+            2: "You are in the Black Room",
+            3: "You are in the Blue Room",
+            0: "You are in the White Room",
         }
         return rooms[room_number]
 
     def greet(self):
         """
         Welcome a client to the game.
-        
+
         Puts a welcome message and the description of the client's current room into
         the output buffer.
-        
-        :return: None 
+
+        :return: None
         """
-        self.output_buffer = f"Welcome to {self.game_name}! {self.room_description(self.room)}"
+        self.output_buffer = (
+            f"Welcome to {self.game_name}! {self.room_description(self.room)}"
+        )
 
     def get_input(self):
         """
 
         Retrieve input from the client_connection. All messages from the client
         should end in a newline character: '\n'.
-        
+
         This is a BLOCKING call. It should not return until there is some input from
         the client to receive.
-         
-        :return: None 
+
+        :return: None
         """
 
-        received = b''
-        while b'\n' not in received:
+        received = b""
+        while b"\n" not in received:
             received += self.client_connection.recv(16)
 
         self.input_buffer = received.decode()
@@ -131,36 +134,38 @@ class Server(object):
     def move(self, argument):
         """
         Moves the client from one room to another.
-        
+
         Examines the argument, which should be one of:
-        
+
         * "north"
         * "south"
         * "east"
         * "west"
-        
+
         "Moves" the client into a new room by adjusting self.room to reflect the
         number of the room that the client has moved into.
-        
+
         Puts the room description (see `self.room_description`) for the new room
         into "self.output_buffer".
-        
+
         :param argument: str
         :return: None
         """
 
         directions = {
-            'north': "self.rooms[self.room].north",
-            'south': 'self.rooms[self.room].south',
-            'west': 'self.rooms[self.room].west',
-            'east': 'self.rooms[self.room].east',
+            "north": "self.rooms[self.room].north",
+            "south": "self.rooms[self.room].south",
+            "west": "self.rooms[self.room].west",
+            "east": "self.rooms[self.room].east",
         }
 
         if eval(directions[argument]) is not None:
             self.room = eval(directions[argument])
             self.output_buffer = self.room_description(self.room)
         else:
-            self.output_buffer = f"You cannot move {argument}\n{self.room_description(self.room)}"
+            self.output_buffer = (
+                f"You cannot move {argument}\n{self.room_description(self.room)}"
+            )
 
     def say(self, argument):
         """
@@ -171,7 +176,7 @@ class Server(object):
         would put
         `You say, "Is there anybody here?"`
         into the output buffer.
-        
+
         :param argument: str
         :return: None
         """
@@ -180,11 +185,11 @@ class Server(object):
     def quit(self, argument):
         """
         Quits the client from the server.
-        
+
         Turns `self.done` to True and puts "Goodbye!" onto the output buffer.
-        
+
         Ignore the argument.
-        
+
         :param argument: str
         :return: None
         """
@@ -195,38 +200,34 @@ class Server(object):
         """
         Examines `self.input_buffer` to perform the correct action (move, quit, or
         say) on behalf of the client.
-        
+
         For example, if the input buffer contains "say Is anybody here?" then `route`
         should invoke `self.say("Is anybody here?")`. If the input buffer contains
         "move north", then `route` should invoke `self.move("north")`.
-        
+
         :return: None
         """
 
         received = self.input_buffer.split(" ")
-        command = received.pop(0).strip('\n')
+        command = received.pop(0).strip("\n")
         arguments = " ".join(received)
-        arguments = arguments.strip('\n')
+        arguments = arguments.strip("\n")
 
         try:
-            {
-                'quit': self.quit,
-                'move': self.move,
-                'say': self.say,
-            }[command](arguments)
+            {"quit": self.quit, "move": self.move, "say": self.say}[command](arguments)
         except KeyError:
-            self.output_buffer = f"Cannot {command}"
+            self.output_buffer = f"Cannot {command} {arguments}"
 
     def push_output(self):
         """
         Sends the contents of the output buffer to the client.
-        
+
         This method should prepend "OK! " to the output and append "\n" before
         sending it.
-        
-        :return: None 
+
+        :return: None
         """
-        self.client_connection.sendall(b"OK! "  + self.output_buffer.encode() + b"\n")
+        self.client_connection.sendall(b"OK! " + self.output_buffer.encode() + b"\n")
 
     def generate_rooms(self):
         """
@@ -238,8 +239,9 @@ class Server(object):
             2: Room(None, None, 0, None),
             3: Room(None, 0, None, None),
         }
-        
+
     def serve(self):
+        """ We Wuz Main """
         self.connect()
         self.greet()
         self.push_output()
