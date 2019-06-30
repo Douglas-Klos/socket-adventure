@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import socket
 import sys
 
@@ -18,6 +19,8 @@ while True:
         break
 
     print(response)
+    if "OK! Goodbye!" in response:
+        sys.exit(0)
 
     my_message = input("> ").encode('utf-8') + b'\n'
     client_socket.sendall(my_message)

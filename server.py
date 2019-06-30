@@ -1,6 +1,16 @@
 import socket
 
 
+class Room():
+    """ base empty room class """
+
+    def __init__(self, north=None, south=None, west=None, east=None):
+        self.north = north
+        self.south = south
+        self.east = west
+        self.west = east
+
+
 class Server(object):
     """
     An adventure game socket server
@@ -46,6 +56,7 @@ class Server(object):
     game_name = "Realms of Venture"
 
     def __init__(self, port=50000):
+
         self.input_buffer = ""
         self.output_buffer = ""
         self.done = False
@@ -54,12 +65,14 @@ class Server(object):
         self.port = port
 
         self.room = 0
+        self.rooms = None
 
     def connect(self):
         self.socket = socket.socket(
             socket.AF_INET,
             socket.SOCK_STREAM,
             socket.IPPROTO_TCP)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         address = ('127.0.0.1', self.port)
         self.socket.bind(address)
@@ -77,11 +90,14 @@ class Server(object):
 
         :param room_number: int
         :return: str
-        """
-
-        # TODO: YOUR CODE HERE
-
-        pass
+        """        
+        rooms = {
+            1: 'You are in the Red Room',
+            2: 'You are in the Black Room',
+            3: 'You are in the Blue Room',
+            0: 'You are in the White Room',
+        }
+        return rooms[room_number]
 
     def greet(self):
         """
@@ -92,13 +108,11 @@ class Server(object):
         
         :return: None 
         """
-        self.output_buffer = "Welcome to {}! {}".format(
-            self.game_name,
-            self.room_description(self.room)
-        )
+        self.output_buffer = f"Welcome to {self.game_name}! {self.room_description(self.room)}"
 
     def get_input(self):
         """
+
         Retrieve input from the client_connection. All messages from the client
         should end in a newline character: '\n'.
         
@@ -108,9 +122,11 @@ class Server(object):
         :return: None 
         """
 
-        # TODO: YOUR CODE HERE
+        received = b''
+        while b'\n' not in received:
+            received += self.client_connection.recv(16)
 
-        pass
+        self.input_buffer = received.decode()
 
     def move(self, argument):
         """
@@ -133,14 +149,23 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        directions = {
+            'north': "self.rooms[self.room].north",
+            'south': 'self.rooms[self.room].south',
+            'west': 'self.rooms[self.room].west',
+            'east': 'self.rooms[self.room].east',
+        }
 
-        pass
+        if eval(directions[argument]) is not None:
+            self.room = eval(directions[argument])
+            self.output_buffer = self.room_description(self.room)
+        else:
+            self.output_buffer = f"You cannot move {argument}\n{self.room_description(self.room)}"
 
     def say(self, argument):
         """
         Lets the client speak by putting their utterance into the output buffer.
-        
+        self.output_buffer = f"You cannot move {argument}\n{self.room_description(self.room)}"
         For example:
         `self.say("Is there anybody here?")`
         would put
@@ -150,10 +175,7 @@ class Server(object):
         :param argument: str
         :return: None
         """
-
-        # TODO: YOUR CODE HERE
-
-        pass
+        self.output_buffer = "You say: " + argument
 
     def quit(self, argument):
         """
@@ -166,10 +188,8 @@ class Server(object):
         :param argument: str
         :return: None
         """
-
-        # TODO: YOUR CODE HERE
-
-        pass
+        self.done = True
+        self.output_buffer = "Goodbye!"
 
     def route(self):
         """
@@ -183,9 +203,19 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        received = self.input_buffer.split(" ")
+        command = received.pop(0).strip('\n')
+        arguments = " ".join(received)
+        arguments = arguments.strip('\n')
 
-        pass
+        try:
+            {
+                'quit': self.quit,
+                'move': self.move,
+                'say': self.say,
+            }[command](arguments)
+        except KeyError:
+            self.output_buffer = f"Cannot {command}"
 
     def push_output(self):
         """
@@ -196,15 +226,24 @@ class Server(object):
         
         :return: None 
         """
+        self.client_connection.sendall(b"OK! "  + self.output_buffer.encode() + b"\n")
 
-        # TODO: YOUR CODE HERE
-
-        pass
-
+    def generate_rooms(self):
+        """
+        Geneates rooms for the level
+        """
+        return {
+            0: Room(3, None, 1, 2),
+            1: Room(None, None, None, 0),
+            2: Room(None, None, 0, None),
+            3: Room(None, 0, None, None),
+        }
+        
     def serve(self):
         self.connect()
         self.greet()
         self.push_output()
+        self.rooms = self.generate_rooms()
 
         while not self.done:
             self.get_input()
@@ -212,4 +251,4 @@ class Server(object):
             self.push_output()
 
         self.client_connection.close()
-        self.socket.close()
+        print(self.socket.close())
