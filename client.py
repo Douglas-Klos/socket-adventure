@@ -5,7 +5,7 @@ import sys
 
 
 def main():
-    """ Ah, I see you're a man of cultre as well. """
+    """ Ah, I see you're a man of culture as well. """
     try:
         port = int(sys.argv[1])
     except IndexError:
