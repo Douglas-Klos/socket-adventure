@@ -9,8 +9,8 @@ class Room:
     def __init__(self, north=None, south=None, west=None, east=None):
         self.north = north
         self.south = south
-        self.east = west
-        self.west = east
+        self.east = east
+        self.west = west
 
 
 class Server:
