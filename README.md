@@ -1,6 +1,7 @@
 # SocketAdventure
 
-A Small Single-player Online Role-Playing Game
+Added another class Room that is used as a template for each room.  It stores the number of adjacent rooms for movement.
+
 
 ## To Complete This Exercise
 
